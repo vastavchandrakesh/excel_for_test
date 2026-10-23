@@ -1,0 +1,1051 @@
+READ THIS FIRST - SAMPLE ANSWERS ARE FILLED IN
+=============================================
+Every blank has been filled with a plausible SAMPLE so you can practice the full
+spoken answers. Each sample ends with an asterisk (*).
+
+These are NOT facts from your resume. Before the interview:
+  1. Keep a sample ONLY if it is true for you, or change it to match what you did.
+  2. Never say a starred detail out loud unless you can defend it for 5+ minutes.
+  3. Numbers on your resume (30%, 35%, 40%, 70%, 99.8%) are real; the starred
+     numbers below are assumptions.
+
+SAMPLE FACTS ASSUMED (verify each)
+  - Embedding model: Amazon Titan Text Embeddings v2
+  - Vector store: OpenSearch Serverless
+  - Chunk size 500 tokens, overlap 50, top-k = 5
+  - Diagram understanding: image passed to Claude 3 vision alongside Textract text
+  - 70% cost saving: ~6 hours manual senior-architect review vs a few dollars of
+    AWS usage plus ~1.5 hours human sign-off
+  - Frontend hosting: S3 static site
+  - DAG 30% cut: removed false dependencies, raised parallelism and pool limits,
+    partitioned by ingestion date and region
+  - Multi-region reason: availability and data freshness; your slice = access
+    controls, audit logging, schema-level masking
+  - EventBridge race: same S3 event triggered processing twice; fixed by
+    narrowing the rule and idempotent processing
+  - Glue OOM: large shuffle on an uneven key plus wrong executor memory
+  - RAG evaluation so far: small manual question set with citation spot checks
+  - Terraform: light, not owned in production
+  - Azure Data Lake: basic storage/landing in a small project
+  - Behavioral stories (stakeholder disagreement, mistake): invented examples;
+    replace with real ones
+
+AWS AI DATA ENGINEER - COMPLETE INTERVIEW PREP (FULL CONVERSATION OUTPUT)
+Candidate: Vastav Chandrakesh K
+=========================================================================
+
+CONTENTS
+  SECTION 1  - First read of the JD: fit, probe areas, likely questions
+  SECTION 2  - Intro, prep order, technical questions, project architectures, coding starters
+  SECTION 3  - Project intros and day-to-day (template version, before resume was shared)
+  SECTION 4  - Resume vs JD match, resume-based intros, probe points, resume edits
+  SECTION 5  - Answers to the 10 resume probe points and gap answers
+  SECTION 6  - Coding questions (Python, PySpark, SQL, GenAI/AWS)
+  SECTION 7  - Full expected-question list with answer pointers
+  SECTION 8  - Final answers file (intro, day-to-day, 59 Q&As, gaps)
+
+Note: values ending in * are SAMPLE answers filled in for practice. Replace each with your real details.
+
+
+#########################################################################
+SECTION 1: FIRST READ OF THE JD
+#########################################################################
+
+This role is a strong match. It is a GenAI/RAG role on AWS with a data engineering backbone, which is where you are strongest.
+
+WHERE YOU ARE STRONG
+- Core data stack: Glue, Lambda, S3, IAM, Redshift, PySpark, Python and SQL are covered by McDonald's and Pfizer work.
+- GenAI on AWS: Bedrock RAG chatbot (~40% onboarding load reduction) and the AI Architecture Reviewer (Bedrock, Textract, Lambda) map to "enterprise RAG", "knowledge assistant" and "document intelligence". AWS Generative AI Specialty cert supports this.
+- Data platform work: pipelines, data quality, governance and cost-conscious design from the regulated Pfizer platform fit the governance and security bullets.
+
+WHERE YOU WILL LIKELY GET PROBED
+- Step Functions, API Gateway, DynamoDB, ECS/EKS: listed as required; be ready to say how you would use them. Step Functions for ingest -> chunk -> embed -> index; API Gateway + Lambda fronting Bedrock; DynamoDB for conversation memory/session state.
+- Vector databases: be precise about what you built on. Know chunking, embedding model, retrieval tuning. Compare OpenSearch, pgvector, Pinecone on scale, cost, hybrid search.
+- Agentic AI and multi-agent systems: Bedrock Agents, action groups, supervisor/worker, and when an agent is overkill.
+- Guardrails and Responsible AI: Bedrock Guardrails, PII filtering, prompt injection defenses, grounding checks.
+- LLMOps and evaluation: faithfulness, context precision/recall, golden datasets, latency and token cost monitoring in CloudWatch, prompt versioning.
+- SageMaker and Terraform/CloudFormation: weaker spots; prepare a short honest answer.
+
+LIKELY INTERVIEW QUESTIONS
+1. Walk me through an enterprise RAG architecture on AWS, from ingestion to response, and where it breaks at scale.
+2. How do you improve retrieval quality: chunking strategy, hybrid search, reranking, metadata filters?
+3. How do you evaluate and monitor a GenAI app in production?
+4. How would you build guardrails for a regulated domain?
+5. Design an ingestion pipeline from APIs and databases into a data lake that also feeds a vector store.
+
+
+#########################################################################
+SECTION 2: INTRO, PREP ORDER, TECHNICAL QUESTIONS, ARCHITECTURES, CODING STARTERS
+#########################################################################
+
+OPENING (60-90 seconds)
+"I'm a Senior Data Engineer with 4+ years at Accenture in Hyderabad, working on two large engagements. For McDonald's, I built and operate a TB-scale ETL platform on AWS (Glue, Lambda, S3, MWAA, Redshift) under a 99.8% uptime SLA. For Pfizer, I work on a regulated clinical data platform using Glue, Databricks, Delta Lake and Snowflake, where governance, access control and data quality are non-negotiable.
+
+On the GenAI side, I built an AWS Bedrock RAG chatbot that reduced onboarding load by about 40%, and an AI Architecture Reviewer using Bedrock, Textract, Lambda and a React front end. I also hold the AWS Generative AI Specialty certification. So my strength is the combination this role asks for: solid data pipelines underneath, and production GenAI on top."
+
+PREP ORDER
+1. Your RAG project, end to end (centerpiece of the JD).
+2. Gap services: Step Functions, API Gateway, DynamoDB, ECS/EKS. One concrete "how I'd use it" story each.
+3. Vector DB comparison and retrieval tuning.
+4. Guardrails, evaluation, LLMOps.
+5. Agents and multi-agent patterns.
+6. Coding: Python, PySpark, SQL.
+7. Honest answers for SageMaker and Terraform.
+
+TECHNICAL QUESTIONS
+
+RAG and vector databases
+- Walk through an enterprise RAG pipeline on AWS. Where does it break at scale?
+- How do you choose chunk size and overlap? (Document structure, embedding model token limit, answer granularity. Typically 300-800 tokens with 10-20% overlap, then tune against an eval set.)
+- Hybrid vs pure vector search? (BM25 + kNN catches exact terms like IDs and acronyms. Add a reranker.)
+- OpenSearch vs pgvector vs Pinecone vs Chroma? (OpenSearch: managed, hybrid search, AWS-native. pgvector: simple if already on Postgres, limited at very large scale. Pinecone: fully managed, fast, external, added cost. Chroma: prototyping.)
+- How do you keep the index fresh? (Incremental ingestion, S3 event triggers, document hashing, upserts and deletes.)
+- Metadata filtering and row/document-level access control in RAG?
+- Bedrock Knowledge Bases vs custom pipeline?
+
+Bedrock, agents, LLMOps
+- Bedrock Agents: action groups, knowledge bases, orchestration. When is an agent overkill?
+- Supervisor/worker multi-agent pattern. Failures and loops?
+- Evaluating a RAG system (faithfulness, answer relevance, context precision/recall, golden dataset, LLM-as-judge plus human spot checks).
+- Monitoring latency, token usage and cost (CloudWatch metrics, invocation logging, per-request token tags, caching, smaller models).
+- Prompt versioning and optimization.
+- Reducing hallucinations (grounding, citations, "answer only from context", guardrail grounding checks, refusal path).
+- Guardrails: PII redaction, denied topics, prompt injection defenses, content filters.
+- SageMaker: training vs real-time endpoint vs batch transform. SageMaker vs Bedrock?
+
+Data engineering and AWS
+- Ingestion from REST APIs and databases into a lake (pagination, rate limits, retries, idempotency, watermarks, DMS or JDBC).
+- Glue vs Lambda vs ECS/EKS.
+- Step Functions vs MWAA/Airflow.
+- Redshift distribution and sort keys, Spectrum, concurrency scaling. Redshift vs Snowflake.
+- DynamoDB: partition key design, hot partitions, TTL, conversation memory.
+- API Gateway + Lambda + Bedrock: auth, throttling, streaming, timeouts (29s REST limit).
+- IAM: least privilege, Bedrock model access, cross-account roles, VPC endpoints/PrivateLink.
+- Data quality and governance (Glue Data Quality, Lake Formation, Unity Catalog lineage).
+- Terraform vs CloudFormation, CI/CD for Glue and Lambda.
+- Cost optimization: Glue worker sizing, partitioning, Parquet, S3 lifecycle, Bedrock token cost.
+
+PROJECT ARCHITECTURES (template; adapt to what you actually built)
+
+Project A: Bedrock RAG chatbot
+INGESTION
+Docs (S3) -> S3 Event -> Lambda/Step Functions
+  -> Textract (scanned PDFs) -> clean + chunk
+  -> Bedrock Titan Embeddings -> OpenSearch Serverless (vectors + metadata)
+QUERY
+User (React/Teams) -> API Gateway -> Lambda
+  -> embed query -> hybrid retrieve top-k (+ metadata filter)
+  -> (optional rerank) -> build prompt with context
+  -> Bedrock Claude (+ Guardrails) -> answer + citations
+  -> DynamoDB (session memory) + CloudWatch (latency/tokens/feedback)
+Explain in order: ingestion, chunking and embedding, retrieval, generation with guardrails, monitoring and feedback. For each stage state the decision and trade-off. Be ready to say how you measured the 40%, how you handled stale documents, and what you'd improve (reranking, eval pipeline, caching).
+
+Project B: AI Architecture Reviewer
+User uploads architecture diagram/doc (React) -> S3 (presigned URL)
+  -> Lambda -> Textract (text/labels) -> Bedrock (multimodal/LLM)
+  -> RAG over best-practice docs (Well-Architected, internal standards)
+  -> structured review (risks, gaps, recommendations) -> React UI
+Talking points: structured JSON prompts, grounding in Well-Architected, handling messy Textract output.
+
+Project C: McDonald's TB-scale ETL
+Sources (APIs, DBs, files) -> S3 raw -> Glue (PySpark) -> S3 curated (Parquet, partitioned)
+  -> Redshift/Snowflake -> consumers
+Orchestration: MWAA/Airflow; alerts: EventBridge + SNS + CloudWatch
+Talking points: 30% DAG runtime reduction (what you changed), 99.8% SLA (retries, alerting, idempotent reruns), Wiz remediation.
+
+Project D: Pfizer clinical data platform
+Talking points: regulated environment, IAM and SCP restrictions, Glue/EventBridge/SNS failure alerting, Databricks orchestration, Secrets Manager. Frame as "GenAI-ready governance".
+Tie to JD: "Because I build the data layer, my RAG systems start with clean, governed, incrementally refreshed data, which is where most enterprise RAG failures begin."
+
+(Coding starters are covered in full in SECTION 6.)
+
+GAP ANSWERS (short)
+- SageMaker: "I've used Bedrock for managed foundation models. For custom models I'd use SageMaker training jobs and real-time or batch endpoints, with pipelines for the data prep I already own."
+- Terraform/ECS/EKS: "I've deployed with CI/CD and IAM-managed infrastructure. I'd model this in Terraform, containerize the service for ECS Fargate, and use EKS only if the workload needs Kubernetes-level control."
+
+
+#########################################################################
+SECTION 3: PROJECT INTROS AND DAY-TO-DAY (TEMPLATE VERSION)
+#########################################################################
+(Written before the resume was shared; superseded by Section 4 where they differ.)
+
+BEDROCK RAG CHATBOT
+"At Accenture, new joiners and support teams were repeatedly asking the same questions about internal processes and documentation. I built a RAG chatbot on AWS Bedrock to answer from those documents. Documents land in S3, get cleaned and chunked, embedded with a Bedrock embedding model, and indexed in a vector store with metadata. At query time, Lambda behind API Gateway embeds the question, retrieves the top-k chunks, builds a grounded prompt, and calls a Claude model on Bedrock, returning the answer with source citations. I added guardrails and session memory, and monitored latency and token usage in CloudWatch. It reduced onboarding load by about 40%."
+
+AI ARCHITECTURE REVIEWER
+"I built a tool that reviews architecture documents and diagrams. Users upload a file through a React UI to S3, Textract extracts the text and labels, and Bedrock reviews it against best-practice content retrieved through RAG. It returns structured findings: risks, gaps and recommendations. The hard parts were noisy Textract output and forcing reliable structured JSON from the model."
+
+McDONALD'S ETL
+"I'm a core engineer on a global data platform processing terabytes with a 99.8% uptime SLA. Data from APIs, databases and files lands in S3, is transformed by Glue PySpark jobs into partitioned Parquet, and loaded to the warehouse layer. Orchestration is on MWAA/Airflow, with CloudWatch, EventBridge and SNS alerting. I cut DAG runtime by about 30% by partitioning by ingestion date and region, removing false DAG dependencies and raising parallelism*, and I contributed to security remediation through Wiz findings."
+
+PFIZER
+"This is a regulated Phase 3 clinical data platform using Glue, Databricks with Delta Lake and Unity Catalog, and Snowflake. Access control, auditability and data quality are mandatory. I built and migrated ETL jobs, set up Secrets Manager integration and IAM roles, and built failure alerting with EventBridge and SNS, working within strict organizational SCPs."
+
+DAY-TO-DAY (McDonald's)
+- Check overnight pipeline runs in Airflow and CloudWatch, triage failures, rerun idempotently.
+- Fix or tune Glue jobs: skew, small files, memory errors, worker sizing.
+- Build or modify pipelines for new sources, including schema changes and incremental loads.
+- Handle data quality issues from downstream consumers and add checks.
+- Standup, code reviews, PRs, CI/CD deployments.
+- Wiz security findings and cost optimization.
+
+DAY-TO-DAY (Pfizer)
+- Develop and test ETL jobs (Glue Python Shell, PySpark, Databricks workflows).
+- Manage IAM roles, Secrets Manager and alerting, often via console/CloudShell workarounds because of SCP restrictions.
+- Validate data against clinical requirements and document changes for audit.
+- Coordinate with data scientists, QA and the client team.
+
+DAY-TO-DAY (RAG chatbot)
+- Review unanswered or low-rated questions, tune chunking, prompts, retrieval.
+- Refresh the index when documents change.
+- Check latency, token usage and cost.
+- Collect stakeholder feedback and expand document sources.
+
+
+#########################################################################
+SECTION 4: RESUME vs JD MATCH (BASED ON YOUR resume.tex)
+#########################################################################
+
+Your resume covers about 60% of this JD well.
+
+JD MATCH TABLE
+- S3, Glue, Lambda, IAM, EC2, Redshift, EventBridge: Listed. Glue, Lambda, S3, EventBridge have bullet evidence. Redshift and EC2 have none.
+- Python, PySpark, SQL: Strong.
+- Bedrock, RAG, prompt engineering: Strong (two projects plus GenAI cert).
+- API Gateway, REST APIs: Present in Architecture Reviewer and chatbot backend.
+- CI/CD, Git: Present (50% shorter releases, 30% fewer rollbacks).
+- Data lake, ETL, modeling, governance: Strong (medallion, Unity Catalog, star schema, audit logging).
+- Step Functions, DynamoDB, ECS/EKS: MISSING.
+- OpenSearch/vector DB (named): MISSING. Resume says "semantic search" but never names the store.
+- SageMaker, Docker, Terraform/CloudFormation: MISSING.
+- Guardrails, LLM evaluation, LLMOps, agents/multi-agent: MISSING.
+
+OVERALL INTRO (about 75 seconds, from resume)
+"I'm a Senior Data Engineer with 4+ years at Accenture, working across McDonald's and Pfizer. At McDonald's I own TB-scale ETL on AWS with PySpark and Airflow. I cut DAG runtime by 30% and dimensional-model report runtime by 35%. At Pfizer I architected a regulated multi-region clinical platform on Databricks with Delta Lake and Unity Catalog, with audit logging and access controls. Alongside that, I've built GenAI systems on Bedrock: an AI Architecture Reviewer using Claude 3, Textract, Lambda and API Gateway, delivered as an official Pfizer deliverable, and an onboarding assistant that cut new-engineer ramp-up load by 40%. I hold the AWS Generative AI Specialty. What I bring to this role is reliable, governed data pipelines underneath GenAI applications."
+
+AI ARCHITECTURE REVIEWER (resume version)
+"Pfizer needed faster architecture reviews, which were manual and took days. I built a RAG system where a user uploads a cloud architecture diagram in a React app, it lands in S3, and Lambda behind API Gateway orchestrates extraction with Textract. I designed the retrieval pipeline (chunking, embeddings, semantic search over AWS Well-Architected guidance and internal architecture standards*), and Claude 3 on Bedrock generates the review. Turnaround went from days to minutes, with a 70% cost reduction versus manual senior-architect reviews."
+
+GENAI ONBOARDING ASSISTANT
+"New engineers kept asking the same questions, so I built an internal assistant on Bedrock with Claude, grounded in internal docs. I designed the retrieval and context-injection layer and the prompts. It cut ramp-up load by 40%, built with zero tooling budget."
+
+McDONALD'S (resume version)
+"I own TB-scale ETL on S3 using PySpark, chosen over Pandas for distributed fan-out, partitioned by ingestion date and region, orchestrated on Airflow. I redesigned DAG dependencies and parallelism to cut daily runtime by 30% with no extra compute, built star schemas across 10+ sources, and built QuickSight dashboards that removed 40% of ad-hoc requests."
+
+PFIZER (resume version)
+"I built a medallion lakehouse on Databricks with schema enforcement, time travel and Unity Catalog governance. I tuned Spark with AQE, partition pruning and broadcast joins (40% less shuffle), and right-sized job compute versus all-purpose to cut cost 30%."
+
+DAY-TO-DAY (consistent with resume bullets)
+- Monitor Airflow and CloudWatch runs, triage failures, rerun idempotently.
+- Debug Glue/Spark issues (executor memory OOM, duplicate-key violation fixed with a dedup CTE, EventBridge rule race condition).
+- Build and tune pipelines and SQL layers (CTEs, window functions, partition strategy).
+- Run CI/CD with automated test gates, own releases.
+- Handle alerting, incident response and access-policy fixes (Wiz/Secrets Manager remediation).
+- Support analysts and stakeholders on dashboards and data quality (Snowflake validation checks).
+- GenAI: improve prompts and retrieval, review feedback, keep documents current.
+
+WHERE AN INTERVIEWER WILL PROBE
+1. Vector store and embedding model: the resume never names them. Decide your true answer now.
+2. Textract on architecture diagrams: reads text and labels, not relationships. Be ready to say how the model understood connections.
+3. "70% cost reduction": know the formula (reviewer hours x rate vs Bedrock and infra cost).
+4. "Zero tooling budget": know how it was hosted and what token costs looked like.
+5. Redshift: in skills with no project. Be honest.
+6. Uptime numbers: "zero missed SLAs" alongside "99.8% uptime" can sound contradictory.
+7. Multi-region "architected": know what was replicated and why, and your role.
+8. NLP on clinical notes: expect PHI/de-identification questions. Answer only from what you did.
+9. Alerting stack: Teams + Azure Pipelines webhooks in an AWS shop; have a one-line reason.
+10. Azure Data Lake and GCP: be ready to say how deep it really is.
+
+RESUME EDITS FOR THIS JD (only where true)
+- Delete duplication: Architecture Reviewer and onboarding chatbot appear in both Experience and Projects. Keep full bullets in one place; use freed space for missing keywords.
+- Name the vector store and embedding model in the RAG bullets.
+- Add SNS to alerting and Glue Python Shell/Secrets Manager to Pfizer, since you did that work.
+- Add Guardrails, evaluation or monitoring only if you actually implemented any.
+- Add Step Functions, DynamoDB, Docker, Terraform only if you have used them, even lightly.
+- Use one consistent word instead of "official Pfizer deliverable" and "POC".
+
+GAP ANSWERS
+- Step Functions/DynamoDB/ECS: "I haven't owned these in production. I'd use Step Functions for ingest -> chunk -> embed -> index, DynamoDB for session memory, and Fargate for long-running services, and my orchestration experience in Airflow carries over."
+- SageMaker/Terraform: "I've used Bedrock for managed models and CI/CD for deployments. I'd add SageMaker for custom models and Terraform for infrastructure."
+
+
+#########################################################################
+SECTION 5: ANSWERS TO THE 10 PROBE POINTS AND GAP ANSWERS (EXPANDED)
+#########################################################################
+
+1. Which vector store and embedding model did you use?
+"I used Amazon Titan Text Embeddings v2* for embeddings and OpenSearch Serverless* for retrieval. I chose it because it is managed, AWS-native and needed no extra licensing*. Chunk size was 500* tokens with 50* overlap, and I retrieved the top 5* chunks. For production scale I'd move to OpenSearch for hybrid search and metadata filtering."
+(If you used a simple or in-memory index, say so. A made-up OpenSearch claim falls apart on the second follow-up.)
+
+2. How does Textract handle architecture diagrams?
+"Textract extracts the text and labels, like service names and annotations. It doesn't understand the connections, so I passed the diagram image to Claude 3's vision capability alongside the extracted text*. The output was a structured review of risks and recommendations, grounded in retrieved best-practice content."
+(Be candid: relationship inference is imperfect; you treated output as expert-assist, not replacement.)
+
+3. How did you get the 70% cost reduction?
+"I compared the cost of a manual senior-architect review, roughly 6 hours of a senior architect's time*, against the per-review cost of Bedrock tokens, Textract pages, Lambda and API Gateway, which is a few dollars of AWS usage plus about 1.5 hours of human sign-off, roughly 30% of the manual cost*. Turnaround also dropped from days to minutes."
+(If it was an estimate, say "estimated".)
+
+4. What does "zero tooling budget" mean?
+"It means I built it without buying any licensed tools or platforms. It ran on the existing AWS account using pay-per-use services, Bedrock, Lambda, API Gateway and S3, so cost scaled with usage and stayed minimal at our volume. Frontend hosting was an S3 static site*."
+
+5. Redshift is in your skills but not in a project.
+"My hands-on warehouse work is in Snowflake and Databricks SQL Warehouses, plus Glue-based pipelines on S3. I know Redshift concepts: distribution and sort keys, columnar storage, Spectrum for querying S3, WLM and concurrency scaling, and COPY from S3. The dimensional modeling and query tuning I did transfers directly."
+(If not comfortable, move Redshift out of the top of your skills line.)
+
+6. "Zero missed SLAs" and "99.8% uptime" sound contradictory.
+"They measure different things. Uptime is platform and pipeline availability. The SLA is whether data was delivered by its deadline. Retries, alerting and idempotent reruns meant failures were recovered before they hit a delivery deadline."
+(Don't claim "zero failures". Claim fast recovery.)
+
+7. What did you do on the multi-region platform?
+"I designed the access controls, audit logging and schema-level data masking, and set up governance in Unity Catalog. The multi-region setup was for availability and data freshness across regions*. My part was access controls, audit logging and schema-level masking*, and wider infrastructure decisions were made with the platform and architecture team."
+
+8. How did you handle PHI in the NLP work on clinical notes?
+"My work was the pipeline: orchestrating multi-task Databricks Jobs for feature engineering on unstructured notes and tracking experiments in MLflow. Access was controlled through Unity Catalog, with masking and audit logging at the schema level, and everything stayed inside the governed environment. De-identification policy was set by the client's compliance team, and I followed it."
+
+9. Why Teams and Azure Pipelines webhooks in an AWS shop?
+"The client team already worked in Microsoft Teams and Azure Pipelines for CI/CD, so I routed Airflow failure alerts there to reach the people on call where they already were. That cut detection time by 50%. I also* use SNS for the AWS-native side."
+
+10. How deep is your Azure Data Lake and GCP experience?
+"AWS is my primary platform. I hold the GCP Associate Cloud Engineer and Fabric DP-700 certifications and have worked with Azure Data Lake for basic storage and data landing in a small project*. I'm comfortable with the concepts across clouds, but my production depth is AWS and Databricks."
+
+GAP ANSWERS (EXPANDED)
+Step Functions: "I haven't owned it in production. I've done orchestration in Airflow, so the model is familiar. For a RAG ingestion flow I'd use Step Functions for ingest, chunk, embed, index, with a Map state for parallel chunking, retries with backoff, and a catch path that sends failures to SNS."
+DynamoDB: "I'd use it for session memory and conversation history, with the session ID as partition key, a sort key on timestamp, and TTL to expire old sessions. I'd avoid hot partitions by not keying on anything low-cardinality."
+API Gateway: "I used API Gateway with Lambda as the backend for the upload and review flow. For longer LLM calls I'd watch the 29-second integration timeout and use asynchronous processing or streaming."
+ECS/EKS and Docker: "I haven't run these in production. I'd containerize a long-running service with Docker and deploy to ECS Fargate, and only use EKS if we needed Kubernetes-level control."
+SageMaker and Terraform: "My managed-model work has been on Bedrock. For custom training or hosting I'd use SageMaker, and I'd define the infrastructure in Terraform. My CI/CD and IAM experience carries over."
+Guardrails, evaluation, agents: "In my RAG work I used grounding in retrieved context, source citations and a refusal path*. For a production system I'd add Bedrock Guardrails for PII and content filtering, a golden question set to measure faithfulness and context precision, and CloudWatch tracking for latency and tokens." For agents: "I haven't built a multi-agent system in production, but I understand the supervisor/worker pattern with Bedrock Agents and action groups, and I'd use it only when a deterministic workflow isn't enough."
+
+RULES FOR THE INTERVIEW
+1. Say "I haven't owned that, here's how I'd do it" once and move on. Don't apologize.
+2. Always pivot from a gap to a related strength.
+3. Never claim a tool you can't discuss for five minutes.
+
+
+#########################################################################
+SECTION 6: CODING QUESTIONS
+#########################################################################
+Practice typing these without looking. Narrate approach, complexity and edge cases.
+
+=== PYTHON ===
+
+1. Retry with exponential backoff (API ingestion)
+
+import time, random, functools
+
+def retry(max_attempts=5, base=1.0, exceptions=(Exception,)):
+    def deco(fn):
+        @functools.wraps(fn)
+        def wrapper(*a, **kw):
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return fn(*a, **kw)
+                except exceptions:
+                    if attempt == max_attempts:
+                        raise
+                    time.sleep(base * 2 ** (attempt - 1) + random.random())
+        return wrapper
+    return deco
+
+Say: jitter avoids thundering herd; retry only transient errors (429, 5xx, timeouts), never 4xx like 400 or 403.
+
+2. Chunking with overlap
+
+def chunk(text, size=500, overlap=50):
+    if overlap >= size:
+        raise ValueError("overlap must be < size")
+    words, step = text.split(), size - overlap
+    return [" ".join(words[i:i + size])
+            for i in range(0, max(len(words) - overlap, 1), step)]
+
+Say: in production chunk by tokens or document structure (headings, paragraphs), not raw words.
+
+3. Idempotent ingestion (skip unchanged documents)
+
+import hashlib, boto3
+s3 = boto3.client("s3")
+
+def doc_hash(bucket, key):
+    body = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+    return hashlib.sha256(body).hexdigest()
+
+def needs_reindex(bucket, key, index_state: dict):
+    h = doc_hash(bucket, key)
+    if index_state.get(key) == h:
+        return False
+    index_state[key] = h   # in real life: persist in DynamoDB or S3
+    return True
+
+4. Cosine similarity top-k (explains what a vector DB does)
+
+import numpy as np
+
+def top_k(query_vec, matrix, k=5):
+    q = query_vec / np.linalg.norm(query_vec)
+    m = matrix / np.linalg.norm(matrix, axis=1, keepdims=True)
+    scores = m @ q
+    idx = np.argpartition(-scores, k)[:k]
+    return idx[np.argsort(-scores[idx])], scores[idx]
+
+5. Flatten nested JSON from an API
+
+def flatten(d, parent="", sep="."):
+    out = {}
+    for k, v in d.items():
+        key = f"{parent}{sep}{k}" if parent else k
+        if isinstance(v, dict):
+            out.update(flatten(v, key, sep))
+        else:
+            out[key] = v
+    return out
+
+6. Pagination with a generator and a watermark
+
+import requests
+
+def fetch_since(url, headers, since):
+    page = 1
+    while True:
+        r = requests.get(url, headers=headers, timeout=30,
+                         params={"page": page, "updated_after": since})
+        r.raise_for_status()
+        items = r.json().get("items", [])
+        if not items:
+            return
+        yield from items
+        page += 1
+
+Say: the generator keeps memory flat; store the max updated_at as the next watermark only after a successful write.
+
+=== PYSPARK ===
+
+1. Latest record per key
+
+from pyspark.sql import Window, functions as F
+w = Window.partitionBy("id").orderBy(F.col("updated_at").desc())
+latest = df.withColumn("rn", F.row_number().over(w)).filter("rn = 1").drop("rn")
+
+2. Data skew with salting
+
+N = 10
+big = big.withColumn("salt", (F.rand() * N).cast("int"))
+small = small.withColumn("salt", F.explode(F.array([F.lit(i) for i in range(N)])))
+joined = big.join(small, ["join_key", "salt"]).drop("salt")
+
+Also mention: broadcast the small side if it fits, and AQE skew join (spark.sql.adaptive.skewJoin.enabled=true).
+
+3. Broadcast join
+
+from pyspark.sql.functions import broadcast
+result = fact.join(broadcast(dim), "dim_id", "left")
+
+4. Incremental load with watermark
+
+last = spark.read.parquet(state_path).agg(F.max("wm")).first()[0] or "1970-01-01"
+new = src.filter(F.col("updated_at") > F.lit(last))
+new.write.mode("append").partitionBy("ingest_date").parquet(target)
+
+5. Running total and 7-day rolling average
+
+w = Window.partitionBy("region").orderBy("dt")
+df = (df.withColumn("running_total", F.sum("amount").over(w))
+        .withColumn("avg_7d", F.avg("amount").over(w.rowsBetween(-6, 0))))
+
+6. Explode nested JSON
+
+df = (raw.select("id", F.explode("items").alias("item"))
+         .select("id", "item.sku", "item.qty"))
+
+7. Fix the small files problem
+
+df.repartition("ingest_date").write.partitionBy("ingest_date").parquet(path)
+# or df.coalesce(n) when only reducing partitions
+
+Say: coalesce avoids a shuffle but can leave uneven partitions; repartition shuffles but balances.
+
+=== SQL ===
+
+1. Second-highest salary per department
+
+SELECT dept, emp, salary
+FROM (
+  SELECT dept, emp, salary,
+         DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS rnk
+  FROM employees
+) t
+WHERE rnk = 2;
+
+2. Running total
+
+SELECT order_date, amount,
+       SUM(amount) OVER (ORDER BY order_date
+                         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running
+FROM orders;
+
+3. Consecutive-day streaks (gaps and islands)
+
+SELECT user_id, MIN(login_date) AS start_dt, MAX(login_date) AS end_dt, COUNT(*) AS days
+FROM (
+  SELECT user_id, login_date,
+         DATEADD(day, -ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date), login_date) AS grp
+  FROM (SELECT DISTINCT user_id, login_date FROM logins) d
+) x
+GROUP BY user_id, grp;
+
+4. Delete duplicates, keep one
+
+DELETE FROM t
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id, ROW_NUMBER() OVER (PARTITION BY business_key ORDER BY updated_at DESC) rn
+    FROM t
+  ) x WHERE rn > 1
+);
+
+(Links to your real dedup-CTE story.)
+
+5. SCD Type 2 (Snowflake, two steps)
+
+-- Step 1: close changed rows
+MERGE INTO dim_customer d
+USING stg_customer s
+  ON d.customer_id = s.customer_id AND d.is_current = TRUE
+WHEN MATCHED AND (d.email <> s.email OR d.city <> s.city) THEN
+  UPDATE SET is_current = FALSE, end_date = CURRENT_DATE();
+
+-- Step 2: insert new versions (changed or brand new)
+INSERT INTO dim_customer (customer_id, email, city, start_date, end_date, is_current)
+SELECT s.customer_id, s.email, s.city, CURRENT_DATE(), NULL, TRUE
+FROM stg_customer s
+LEFT JOIN dim_customer d
+  ON d.customer_id = s.customer_id AND d.is_current = TRUE
+WHERE d.customer_id IS NULL;
+
+6. Customers with no orders
+
+SELECT c.customer_id
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.customer_id
+WHERE o.customer_id IS NULL;
+
+7. Row count reconciliation (matches your Snowflake validation bullet)
+
+SELECT 'source' AS side, COUNT(*) AS cnt FROM src
+UNION ALL
+SELECT 'target', COUNT(*) FROM tgt;
+
+=== GENAI / AWS CODING ===
+
+1. Embed text with Bedrock
+
+import boto3, json
+br = boto3.client("bedrock-runtime")
+
+def embed(text):
+    r = br.invoke_model(modelId="amazon.titan-embed-text-v2:0",
+                        body=json.dumps({"inputText": text}))
+    return json.loads(r["body"].read())["embedding"]
+
+2. End-to-end RAG function
+
+def answer(question, search_fn, k=5):
+    hits = search_fn(embed(question), k)          # returns [{"text":..., "source":...}]
+    context = "\n\n".join(f"[{i+1}] {h['text']}" for i, h in enumerate(hits))
+    system = [{"text": "Answer only from the context. Cite sources as [n]. "
+                       "If the answer is not in the context, say you don't know."}]
+    user = f"Context:\n{context}\n\nQuestion: {question}"
+    resp = br.converse(
+        modelId="anthropic.claude-3-5-sonnet-20240620-v1:0",   # confirm current ID
+        system=system,
+        messages=[{"role": "user", "content": [{"text": user}]}],
+        inferenceConfig={"maxTokens": 600, "temperature": 0.1},
+    )
+    return resp["output"]["message"]["content"][0]["text"], hits
+
+3. OpenSearch index mapping and hybrid query
+
+mapping = {
+  "settings": {"index": {"knn": True}},
+  "mappings": {"properties": {
+    "embedding": {"type": "knn_vector", "dimension": 1024,
+                  "method": {"name": "hnsw", "engine": "faiss", "space_type": "innerproduct"}},
+    "text": {"type": "text"},
+    "source": {"type": "keyword"},
+    "access_group": {"type": "keyword"}}}}
+
+hybrid = {
+  "size": 5,
+  "query": {"bool": {
+    "filter": [{"term": {"access_group": "eng"}}],
+    "should": [
+      {"match": {"text": question}},
+      {"knn": {"embedding": {"vector": emb, "k": 5}}}]}}}
+
+Say: dimension must match the embedding model (Titan v2 defaults to 1024); the filter clause enforces document-level access control. Check engine and space type support for your OpenSearch version.
+
+4. Reliable structured JSON from an LLM
+
+import json
+
+def review_json(prompt, retries=2):
+    for _ in range(retries + 1):
+        out = call_llm(prompt + "\nReturn ONLY valid JSON with keys: risks, gaps, recommendations.")
+        try:
+            data = json.loads(out)
+            if all(k in data for k in ("risks", "gaps", "recommendations")):
+                return data
+        except json.JSONDecodeError:
+            pass
+    raise ValueError("Model did not return valid JSON")
+
+5. S3-triggered ingestion Lambda
+
+import urllib.parse, boto3
+s3 = boto3.client("s3")
+
+def handler(event, ctx):
+    for rec in event["Records"]:
+        bucket = rec["s3"]["bucket"]["name"]
+        key = urllib.parse.unquote_plus(rec["s3"]["object"]["key"])
+        text = s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
+        for i, c in enumerate(chunk(text)):
+            vec = embed(c)
+            # upsert with a deterministic id so reruns are idempotent
+            upsert(f"{key}#{i}", c, vec, {"source": key})
+
+Say: the key is URL-encoded in S3 events; deterministic IDs make retries safe.
+
+6. Trigger a Glue job and wait
+
+import boto3, time
+glue = boto3.client("glue")
+
+run_id = glue.start_job_run(JobName="etl-job", Arguments={"--run_date": "2026-10-21"})["JobRunId"]
+while True:
+    state = glue.get_job_run(JobName="etl-job", RunId=run_id)["JobRun"]["JobRunState"]
+    if state in ("SUCCEEDED", "FAILED", "STOPPED", "TIMEOUT"):
+        break
+    time.sleep(30)
+
+7. Read a secret
+
+sm = boto3.client("secretsmanager")
+secret = json.loads(sm.get_secret_value(SecretId="prod/db")["SecretString"])
+
+HOW TO PRACTICE
+1. Narrate while you type: approach, complexity, edge cases (empty input, nulls, duplicates, ties).
+2. For every SQL answer, know ROW_NUMBER vs RANK vs DENSE_RANK.
+3. For every PySpark answer, know which operations cause shuffles.
+4. For GenAI code, explain failure modes: throttling, timeouts, empty retrieval, malformed JSON.
+
+
+#########################################################################
+SECTION 7: FULL EXPECTED-QUESTION LIST WITH ANSWER POINTERS
+#########################################################################
+
+A. RESUME DEEP-DIVE (highest probability)
+1. Walk me through your most complex pipeline. Source -> ingest -> transform -> serve, scale, SLA, one failure, one optimization.
+2. How did you cut DAG runtime by 30%? Dependency graph analysis, removing false dependencies, parallelism and pool settings, no added compute. Sample: removed false task dependencies and raised parallelism and pool limits*.
+3. Why PySpark over Pandas? Distributed execution, data beyond single-node memory, partitioned parallel reads on S3.
+4. How did you get a 35% report runtime reduction? Star schema, pre-aggregation layers, CTE and window-function tuning, partition pruning.
+5. How did you reduce shuffle by 40%? AQE, broadcast joins, partition pruning, skew handling.
+6. Why Databricks over EMR? Notebook-native iteration, Delta features, Unity Catalog, job compute economics. Be fair to EMR's strengths.
+7. Explain your medallion layers. Bronze raw and append-only, Silver cleaned and conformed with dedup, Gold business-ready marts.
+8. How does Unity Catalog governance work in practice? Catalog/schema/table permissions, row and column security, lineage, audit logs.
+9. Tell me about the Wiz/Secrets Manager fix. Missing resource policy, least-privilege replacement, documented for audit.
+10. What was your exact role in the multi-region design? Describe your slice, not the whole.
+11. How did you build the alerting system? Failure classification, retries, webhooks, 50% faster detection.
+12. Why Teams and Azure Pipelines for alerts? Client's existing tooling.
+13. Tell me about the Copilot Studio vs Kore.ai POC. Criteria, feature parity, integration, recommendation, outcome.
+14. How did you measure the 70% cost reduction and the 40% load reduction? Have the formula and baseline ready.
+15. What do the 99.8% uptime and zero missed SLAs mean? Uptime is availability, SLA is delivery deadline. Don't claim zero failures.
+
+B. RAG AND GENAI
+16. Walk me through your RAG architecture.
+17. Which vector store and embedding model, and why?
+18. How did you choose chunk size and overlap?
+19. How do you improve retrieval quality?
+20. Hybrid vs semantic-only search?
+21. How do you reduce hallucinations?
+22. How do you evaluate a RAG system?
+23. How do you keep the index fresh?
+24. How do you enforce document-level access in RAG?
+25. Prompt injection defenses?
+26. Bedrock Knowledge Bases vs custom pipeline?
+27. How does Textract handle architecture diagrams?
+28. How do you get reliable structured output?
+29. How do you control GenAI cost?
+30. When would you use agents or multi-agent systems?
+31. Bedrock vs SageMaker?
+32. Guardrails for a regulated domain?
+33. How would you monitor a GenAI app in production?
+34. What do you do when the model is slow or throttled?
+(Full answers to these are in SECTION 8, Part 3, B.)
+
+C. AWS SERVICES
+35. Glue vs Lambda vs ECS/EKS?
+36. Step Functions vs Airflow?
+37. Design Step Functions for ingest -> chunk -> embed -> index.
+38. DynamoDB for conversation memory?
+39. API Gateway limits for LLM calls?
+40. IAM least privilege for a Bedrock app?
+41. Redshift basics.
+42. Terraform vs CloudFormation?
+43. How would you deploy a Glue or Lambda change safely?
+44. S3 event-driven ingestion pitfalls.
+
+D. SPARK AND DATA ENGINEERING
+45. Data skew and fixes. 46. Narrow vs wide transformations. 47. repartition vs coalesce. 48. Small files problem. 49. How AQE helps. 50. Delta Lake features. 51. Idempotent pipelines. 52. Incremental load design. 53. Data quality approach. 54. SCD Type 2. 55. Dimensional modeling decisions.
+
+E. SQL (be ready to code live)
+56. Second-highest per group. 57. Running totals and moving averages. 58. Gaps and islands. 59. Dedup keeping the latest. 60. Customers with no orders. 61. ROW_NUMBER vs RANK vs DENSE_RANK. 62. Query optimization.
+
+F. BEHAVIORAL
+63. Production incident (use Glue OOM or EventBridge story). 64. Disagreement with a stakeholder. 65. Working with data scientists and business teams. 66. Chatbot with zero tooling budget. 67. A mistake you made. 68. Why leaving, why this role. 69. Where in 3 years. (Use STAR; end with a number or lesson.)
+
+G. SCENARIO AND SYSTEM DESIGN
+70. Enterprise RAG for 100K documents and 5K users. 71. Ingestion from REST APIs and databases into a lake that also feeds a vector store. 72. Nightly pipeline missing its SLA. 73. Chatbot gives a wrong answer in front of leadership. 74. Migrating Airflow tasks to Glue or Step Functions.
+
+H. QUESTIONS TO ASK THEM
+- "What does the current GenAI stack look like, and what's the biggest challenge in taking it to production?"
+- "How do you evaluate and monitor LLM quality today?"
+- "What does success look like in the first 90 days?"
+- "How is the team split between data engineering and ML/GenAI work?"
+
+WHAT IMPRESSES INTERVIEWERS
+1. Numbers plus the how. 2. Trade-offs. 3. Failure stories with prevention. 4. Honest boundaries. 5. Connecting data to GenAI.
+
+
+#########################################################################
+SECTION 8: FINAL ANSWERS FILE (INTRO, DAY-TO-DAY, 59 Q&As, GAPS)
+#########################################################################
+
+AWS AI DATA ENGINEER - INTERVIEW ANSWERS (Vastav Chandrakesh K)
+================================================================
+
+HOW TO USE THIS FILE
+- Answers are written as spoken responses.
+- Values ending in * are SAMPLE answers filled in for practice. Replace each with your real details.
+- Where the resume does not prove something, the answer is framed as "here is how I would do it".
+- Make sure spoken numbers match the resume exactly.
+- For gap topics (Step Functions, DynamoDB, ECS/EKS, SageMaker, Terraform, agents): say "I haven't owned that, here's how I'd do it" once, then pivot to a related strength.
+
+
+################################################################
+PART 1: INTRO
+################################################################
+
+90-SECOND VERSION (MAIN INTERVIEW)
+----------------------------------
+"I'm a Senior Data Engineer with 4+ years at Accenture, working on two Fortune 500 platforms.
+
+At McDonald's, I own TB-scale ETL on AWS, using PySpark, S3, Glue and Airflow. A few results: I redesigned DAG dependencies and parallelism to cut daily runtime by 30% with no extra compute, and I built dimensional models across 10+ source systems that cut report runtime by 35%. Across 20+ pipelines we held 99.8% uptime, and I own the release process and alerting.
+
+At Pfizer, I worked on a regulated clinical data platform on Databricks. I built a medallion lakehouse with Delta Lake and Unity Catalog, with access controls, audit logging and masking. I tuned Spark with AQE, partition pruning and broadcast joins, which cut shuffle by 40% and compute cost by 30%.
+
+On top of the data work, I build GenAI on AWS. I delivered an AI Architecture Reviewer, a RAG system on Bedrock with Claude 3, Textract, Lambda and API Gateway, which cut review cost by 70% and turnaround from days to minutes. I also built an onboarding assistant that cut new-engineer ramp-up load by 40%. I hold the AWS Generative AI Specialty certification.
+
+What I bring to this role is the combination you describe: governed, reliable pipelines underneath, and production GenAI on top. Most RAG failures I've seen start with the data layer, and that's where I'm strongest."
+
+30-SECOND VERSION (RECRUITER / HR)
+----------------------------------
+"Senior Data Engineer, 4+ years, McDonald's and Pfizer. TB-scale AWS ETL with PySpark and Airflow, a governed Databricks lakehouse for clinical data, and GenAI on Bedrock, including a RAG system delivered at Pfizer. AWS Generative AI Specialty certified. I'm looking for a role where data engineering and GenAI meet, which is exactly this one."
+
+
+################################################################
+PART 2: DAY-TO-DAY ACTIVITIES
+################################################################
+
+DATA ENGINEERING (McDONALD'S)
+-----------------------------
+"My day starts with checking the overnight Airflow runs and CloudWatch for failures or SLA risk. If something failed, I triage it, find the root cause, and rerun idempotently, so a retry never creates duplicates. Then I split my time between three things:
+- Pipeline development: onboarding new sources, handling schema changes, and keeping incremental loads reliable.
+- Performance and cost: tuning Spark jobs and partitioning, and fixing executor memory, skew or small-file issues.
+- Quality and consumers: supporting analysts and the QuickSight layer, and adding checks so a data issue doesn't repeat.
+
+I also own releases: automated test gates, CI/CD, and rollback readiness. That's how we cut release cycles by 50%. Across all of it, I document lineage and runbooks so on-call isn't dependent on me."
+
+Three failure stories (all on your resume). Format: symptom -> investigation -> root cause -> fix -> prevention.
+1. Glue OOM: wrong executor memory config. Say how you diagnosed it (logs, Spark UI) and how you prevented a repeat.
+2. Duplicate-key violation: missing dedup step. Fix was a dedup CTE plus a uniqueness check.
+3. S3 event race condition: EventBridge rule misconfiguration. Explain the race and the fix.
+
+PLATFORM AND GOVERNANCE (PFIZER)
+--------------------------------
+"At Pfizer the work is as much about control as speed. I work in the medallion layers, Bronze, Silver and Gold, on Delta tables with schema enforcement, and Unity Catalog governs who can see what. I tune Spark jobs and choose job compute over all-purpose clusters to control cost. I run Snowflake validation checks on clinical datasets: nulls, duplicates, row-count reconciliation and schema checks. Security findings from Wiz get diagnosed and fixed with least-privilege policies, and I document each fix for the audit trail. Because of organizational restrictions, some infrastructure changes go through controlled paths, so I plan around that rather than bypass it."
+
+GENAI (RAG ASSISTANTS)
+----------------------
+"For the GenAI systems, the loop is: review low-rated or unanswered questions, then improve chunking, retrieval or prompts, and re-test on a fixed set of real questions before shipping the change. I keep the knowledge base current when source documents change, and I watch latency, token usage and cost. Stakeholder feedback decides what content we add next."
+(If you haven't built an eval set or tracking yet, say "I'd" instead of "I do.")
+
+
+################################################################
+PART 3: QUESTIONS AND ANSWERS
+################################################################
+
+----------------------------------------------------------------
+B. RAG AND GENAI
+----------------------------------------------------------------
+
+1. Walk me through your RAG architecture.
+"Ingestion: documents land in S3, get text-extracted (Textract for scanned files and diagrams), cleaned, chunked, embedded through Bedrock, and indexed with metadata like source and version. Query: the request comes through API Gateway to Lambda, which embeds the question, retrieves the top-k chunks, and builds a prompt that tells Claude to answer only from the context and cite sources. The response goes back to the React UI with citations. I designed the retrieval pipeline and the Lambda orchestration. Monitoring is latency, token usage and user feedback, and the data layer stays fresh through incremental re-ingestion."
+
+2. Which vector store and embedding model, and why?
+"I used Amazon Titan Text Embeddings v2* with OpenSearch Serverless*, because it is managed and AWS-native, and right-sized for a small corpus in a POC*. For production scale I'd move to OpenSearch Serverless or Aurora pgvector for metadata filtering, hybrid search and horizontal scale."
+(If your POC used a simple index, say so. "Right-sized for the corpus, here's the scale path" is a strong answer.)
+
+3. How did you choose chunk size and overlap?
+"I started from document structure (headings and paragraphs), the embedding model's token limit, and the granularity of answers users needed. I used roughly 500* tokens with 50* overlap, then tested against real questions and adjusted. Too small loses context, too large dilutes relevance and burns tokens."
+
+4. How do you improve retrieval quality?
+"I build an evaluation set of real questions with expected source chunks first, so every change is measured. Then, in order of payoff: fix parsing and chunking, add hybrid search, add metadata filters, add a reranker, and rewrite queries. I change one thing at a time and track recall@k."
+
+5. Hybrid vs semantic-only search?
+"Vector search finds meaning, so it handles paraphrases. Keyword search (BM25) finds exact tokens like error codes, service names and acronyms, which embeddings blur. Architecture reviews are full of exact service names, so hybrid fits. I combine scores with reciprocal rank fusion or a reranker."
+
+6. How do you reduce hallucinations?
+"Five layers: retrieve good context, instruct the model to answer only from it, require citations, give it a refusal path ('I don't know') when retrieval is weak, and keep temperature low. In regulated settings I'd add Bedrock Guardrails contextual grounding checks. In my work I used grounding in retrieved context and source citations, plus a refusal path*."
+
+7. How do you evaluate a RAG system?
+"Retrieval and generation are evaluated separately. Retrieval: recall@k and context precision against a golden set. Generation: faithfulness (is every claim supported by context) and answer relevance, scored by LLM-as-judge and spot-checked by humans. Online: thumbs up/down, unanswered rate and escalations. My evaluation so far has been a small set of real questions I checked manually, with spot checks on citations*, and the next step is a fixed regression set that runs before each prompt or retrieval change."
+
+8. How do you keep the index fresh?
+"Event-triggered ingestion: an S3 event starts the pipeline. I hash document content to skip unchanged files, use deterministic chunk IDs (doc#chunk_n) so upserts are idempotent, and delete orphaned chunks when a document shrinks or is removed. A scheduled full reconciliation catches missed events."
+
+9. How do you enforce document-level access in RAG?
+"Store an access attribute (group, classification) as metadata on every chunk, then apply a filter at retrieval time based on the caller's identity from the token. The filter must apply before the LLM sees anything, because you can't un-leak text from a prompt. I'd also log retrievals for audit. This is the same least-privilege thinking as my Unity Catalog work."
+
+10. Prompt injection defenses?
+"Treat retrieved text and user input as untrusted data. Keep instructions in the system prompt, wrap retrieved content in delimiters and tell the model it's data, not instructions. Add input and output guardrails, give the app no tools or permissions it doesn't need, and validate structured outputs. For agents, require confirmation before any write action."
+
+11. Bedrock Knowledge Bases vs custom pipeline?
+"Knowledge Bases for speed: managed ingestion, chunking, sync, and it supports metadata filtering and reranking. Custom when I need control over parsing (tables, diagrams), hybrid scoring, custom access control, or unusual sources. For a POC I'd start managed and go custom where it hurts."
+
+12. How does Textract handle architecture diagrams?
+"Textract extracts text and labels, not relationships between components. So I passed the image to Claude 3's vision capability alongside the extracted text*. Inferred relationships can be wrong, so the output is positioned as an expert-assist with a human sign-off, not a final audit."
+
+13. How do you get reliable structured output?
+"Put the exact JSON schema in the prompt with an example, set low temperature, validate the response against the schema in code, and retry with the error message on a parse failure. On Bedrock, tool-use or structured-output features can enforce a schema more strictly."
+
+14. How do you control GenAI cost?
+"Trim context (fewer, better chunks), cache frequent questions, route simple queries to a smaller model, cap output tokens, and track cost per query in CloudWatch. My Architecture Reviewer cost came to a few dollars in AWS usage* versus manual review, which is where the 70% saving came from."
+
+15. When would you use agents or multi-agent systems?
+"Only when the path isn't known in advance: the model needs to choose among tools or steps. If the workflow is deterministic, plain RAG or Step Functions is cheaper, faster and more predictable. Agents need step limits, timeouts, fallbacks and tracing. I haven't run a multi-agent system in production. I understand supervisor/worker patterns and Bedrock Agents with action groups, and I'd start with one agent and add more only when a single one fails."
+
+16. Bedrock vs SageMaker?
+"Bedrock for managed foundation models behind an API, with no infrastructure to run. SageMaker when I need custom training, fine-tuning on proprietary data, a model Bedrock doesn't offer, or control over hosting. I've used Bedrock in production. SageMaker I know conceptually, and my data pipeline skills feed its training jobs."
+
+17. Guardrails for a regulated domain?
+"Bedrock Guardrails for PII redaction, denied topics and content filters, applied to both input and output. Around that: private connectivity (VPC endpoints), least-privilege IAM, encryption, audit logging of prompts and responses with PII controls, document-level access, and a human review path for high-risk answers. My Pfizer work on masking, audit logging and Unity Catalog is the same discipline."
+
+18. How would you monitor a GenAI app in production?
+"Operational: latency (p50/p95), error and throttle rates, token usage and cost per query. Quality: feedback rate, unanswered rate, retrieval-hit rate, and sampled faithfulness scoring. Dashboards and alarms in CloudWatch, with invocation logging enabled. Alerts on cost spikes and quality drops."
+
+19. What do you do when the model is slow or throttled?
+"Retries with exponential backoff and jitter, streaming so users see tokens early, async processing for long jobs, a request quota increase, a cross-region inference profile or fallback model, and caching. At the API layer, respect the gateway timeout by going async or streaming."
+
+----------------------------------------------------------------
+C. AWS SERVICES (INCLUDING THE GAPS)
+----------------------------------------------------------------
+
+20. Glue vs Lambda vs ECS/EKS?
+"Lambda: short, event-driven tasks under 15 minutes. Glue: distributed Spark transforms on large data. ECS Fargate: long-running or containerized services without managing servers. EKS only if I need Kubernetes-level control or already run it. Glue and Lambda are my production tools."
+
+21. Step Functions vs Airflow?
+"Step Functions: serverless, event-driven, tight AWS integration, great for ingest -> chunk -> embed -> index. Airflow/MWAA: complex scheduling, many dependent batch tasks, backfills, rich operators. I run Airflow in production, so I know the model. I haven't owned Step Functions in production, and I'd pick it for event-driven AWS-only flows."
+
+22. Design Step Functions for ingest -> chunk -> embed -> index.
+"S3 event -> EventBridge -> state machine. Steps: validate and hash (skip if unchanged), extract text (Textract if needed), a Map state to chunk and embed in parallel with a concurrency cap to avoid Bedrock throttling, batch upsert to the vector store using deterministic IDs, then update a manifest. Retries with backoff on throttling, a Catch path to SNS plus a dead-letter queue, and CloudWatch alarms."
+
+23. DynamoDB for conversation memory?
+"Partition key session_id, sort key timestamp, store the last N turns, TTL to expire old sessions, on-demand capacity. High-cardinality session IDs avoid hot partitions. I'd summarize older turns to control token cost. I haven't run it in production, but this is the standard design."
+
+24. API Gateway limits for LLM calls?
+"The default integration timeout is 29 seconds, and LLM calls can exceed that. Options: stream the response, use WebSockets, or go async (return a job ID, process in Lambda or Step Functions, client polls or gets pushed). Also watch payload limits and throttling quotas. Confirm current limits in the docs, since AWS has been relaxing some of them."
+
+25. IAM least privilege for a Bedrock app?
+"The Lambda role gets bedrock:InvokeModel only on the specific model ARNs, S3 access scoped to specific prefixes, and no wildcards. Add VPC endpoints for private access, KMS for encryption, and separate roles per function. I applied this exact approach when I replaced a missing resource policy on a Secrets Manager secret with a least-privilege policy, flagged by Wiz."
+
+26. Redshift basics.
+"Columnar MPP warehouse. Distribution keys co-locate join data (KEY, EVEN, ALL), sort keys speed range filters, Spectrum queries S3, WLM manages concurrency, COPY loads from S3 in parallel, and VACUUM/ANALYZE maintain it. My hands-on warehouse work is Snowflake and Databricks SQL Warehouses, and the modeling and tuning skills transfer."
+
+27. Terraform vs CloudFormation?
+"CloudFormation is AWS-native with no state file to manage. Terraform is multi-cloud, has a larger module ecosystem, and uses explicit state and plan. I'd choose Terraform for multi-cloud or an existing team standard. My IaC experience is light; I haven't owned Terraform in production*, and my CI/CD and IAM background carries over."
+
+28. How would you deploy a Glue or Lambda change safely?
+"Pull request with tests, CI runs unit and data-quality tests, deploy to dev then staging using versioned artifacts, run a smoke test on sample data, then promote to prod with an alias or version so rollback is one switch. That's how I cut release cycles by 50% and rollbacks by 30%."
+
+29. S3 event-driven ingestion pitfalls.
+"Duplicate event delivery (so processing must be idempotent), object keys arrive URL-encoded, no ordering guarantee, and overlapping rules can trigger twice. My EventBridge race condition was this class of problem: a misconfigured rule caused the same S3 event to trigger processing twice*, and I fixed it by narrowing the rule and making processing idempotent*."
+
+----------------------------------------------------------------
+D. SPARK AND DATA ENGINEERING
+----------------------------------------------------------------
+
+30. Data skew and fixes?
+"Skew means a few keys hold most rows, so a few tasks run far longer. Spot it in the Spark UI as one slow task and uneven shuffle sizes. Fixes: enable AQE skew join, broadcast the small side, salt the hot key, or filter and handle null keys separately."
+
+31. Narrow vs wide transformations?
+"Narrow (map, filter) work within a partition with no shuffle. Wide (groupBy, join, distinct, repartition) move data across the network and create stage boundaries. Wide operations are where you optimize."
+
+32. repartition vs coalesce?
+"repartition does a full shuffle and balances partitions, and can increase or decrease the count. coalesce only reduces partitions and avoids a full shuffle but can leave them uneven. I use coalesce to cut output file counts, and repartition when I need balance or key-based layout."
+
+33. Small files problem?
+"Many tiny files make slow listing and many tasks. Fix at write time by controlling partition count (coalesce/repartition) or using maxRecordsPerFile, and afterward by compaction, such as Delta OPTIMIZE or a periodic compaction job. Avoid over-partitioning, like partitioning by a high-cardinality column."
+
+34. How does AQE help?
+"It re-optimizes at runtime using real statistics: coalesces small shuffle partitions, switches a sort-merge join to broadcast when one side turns out small, and splits skewed partitions. It was part of my 40% shuffle reduction, along with partition pruning and broadcast joins."
+
+35. Delta Lake features?
+"ACID transactions, schema enforcement and evolution, time travel, MERGE for upserts and SCD, OPTIMIZE with Z-order for file compaction and data skipping, and VACUUM for cleanup. I used schema enforcement and time travel in the medallion layers at Pfizer."
+
+36. Designing idempotent pipelines?
+"A rerun must produce the same result. Techniques: deterministic keys, MERGE instead of append, overwrite by partition, run-date parameters instead of 'now', and writing to a staging location before an atomic swap. That's why failures at McDonald's could be rerun without duplicates."
+
+37. Incremental load design?
+"Track a watermark (max updated_at or an ID) and load only newer rows, committing the watermark only after a successful write. Handle late-arriving data with a lookback window, capture deletes through CDC or soft-delete flags, and reconcile counts periodically."
+
+38. Data quality approach?
+"Checks at each layer boundary: schema and nulls at Bronze->Silver, duplicates and referential integrity at Silver->Gold, plus row-count reconciliation to source. Bad records go to a quarantine table instead of failing the whole run, and failures alert the team. My Snowflake validation covered null checks, duplicates, row counts and schema validation."
+
+39. SCD Type 2?
+"Keep history by closing the current row (is_current = false, set end_date) when tracked attributes change, then inserting a new current row with a new start date. In Snowflake or Delta this is a MERGE plus an insert of the new version. Use a surrogate key so facts join to the correct version."
+
+40. Dimensional modeling decisions?
+"Declare the grain first, then choose dimensions and measures. Use conformed dimensions so different facts join consistently, surrogate keys to insulate from source key changes, and the right SCD type per attribute. I applied this across 10+ source systems at McDonald's."
+
+----------------------------------------------------------------
+E. SQL
+----------------------------------------------------------------
+
+41. Second-highest per group:
+DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC), filter = 2. Dense rank is used so ties don't skip the rank.
+
+42. Running totals and moving averages:
+SUM(x) OVER (ORDER BY dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW). A 7-day average uses ROWS BETWEEN 6 PRECEDING AND CURRENT ROW. Mention ROWS vs RANGE when dates have gaps or ties.
+
+43. Gaps and islands:
+Take login_date - ROW_NUMBER() OVER (PARTITION BY user ORDER BY login_date) as a group key. Consecutive dates share the same key, so group by it and take MIN/MAX. De-duplicate dates first.
+
+44. Dedup keeping the latest:
+ROW_NUMBER() OVER (PARTITION BY business_key ORDER BY updated_at DESC) in a CTE, keep rn = 1. Add a uniqueness check afterward. This is your real dedup-CTE fix.
+
+45. Customers with no orders:
+LEFT JOIN orders ... WHERE o.customer_id IS NULL, or NOT EXISTS. Avoid NOT IN when the subquery can return NULLs.
+
+46. ROW_NUMBER vs RANK vs DENSE_RANK:
+ROW_NUMBER gives unique sequential numbers even for ties. RANK gives ties the same number and skips the next ones (1,1,3). DENSE_RANK gives ties the same number without skipping (1,1,2).
+
+47. Query optimization:
+Read the execution plan for scans, joins and spills. Filter early, select only needed columns, avoid functions on filter columns (they block partition pruning and index use), partition and cluster on common filters, pre-aggregate heavy joins, and check join order and skew. My 35% report runtime cut came from a star schema, pre-aggregation layers, CTE and window-function tuning, and partition pruning*.
+
+----------------------------------------------------------------
+F. BEHAVIORAL
+----------------------------------------------------------------
+
+48. Production incident (Glue OOM story).
+"A Glue job started failing with out-of-memory errors. I checked the logs and Spark UI and found it was a wrong executor memory configuration for the data volume, with a large shuffle on an uneven key* making it worse. I fixed the configuration and the partitioning*, reran idempotently so nothing duplicated, then added a memory alert and a config review step in the release checklist* so it wouldn't recur. Result: the job has been stable since and the SLA was kept*."
+Structure: symptom -> investigation -> root cause -> fix -> prevention.
+
+49. Disagreement with a stakeholder.
+Pick a real one. Sample answer: "The team lead wanted to replace the Kore.ai chatbot platform with Copilot Studio right away*. I understood their goal was to cut licensing and maintenance effort*, so I ran a structured POC and showed data on feature-parity gaps and integration risk*, proposed a phased evaluation before committing*, and we agreed on a scoped pilot with clear exit criteria*." The Copilot Studio vs Kore.ai evaluation is a good source: you gave a recommendation backed by criteria, not opinion.
+
+50. Working with data scientists and business teams.
+"I translate needs into data contracts: which fields, freshness, quality and ownership. With data scientists I provide clean, versioned, reproducible datasets and feature pipelines, like the NLP feature engineering I orchestrated on Databricks with MLflow tracking. With business users, the QuickSight self-serve layer removed 40% of ad-hoc requests."
+
+51. Delivering the chatbot with zero tooling budget.
+"I picked pay-per-use AWS services on our existing account (Bedrock, Lambda, S3, API Gateway), so cost scaled with usage. I scoped the first version narrowly: one document set and the top repeated questions, shipped it, and expanded based on feedback. It cut new-engineer ramp-up load by 40%."
+
+52. A mistake you made.
+Pick a real one. Sample answer: "I changed a Glue job's partition column without a downstream check*, which caused a duplicate load into a reporting table*. I fixed it by rolling back and reloading the partition idempotently*, told the team early, and then added a row-count and duplicate-key check to the pipeline* so it can't recur." Choose a small, honest mistake with a concrete safeguard. Don't pick a fake weakness.
+
+53. Why are you leaving, and why this role?
+"I've learned a lot at Accenture, owning large-scale data platforms for two Fortune 500 clients. I've also built GenAI systems there, and I want a role where data engineering and GenAI are the core work, with ownership of production AI at scale. This role is that combination: pipelines feeding RAG, guardrails, and evaluation." (Stay positive. Don't criticize your employer.)
+
+54. Where do you want to be in 3 years?
+"Leading the data and GenAI platform for a team: designing the architecture, mentoring engineers, and owning quality, cost and reliability of AI systems in production."
+
+Use STAR (Situation, Task, Action, Result) and end each story with a number or a lesson.
+
+----------------------------------------------------------------
+G. SCENARIO AND SYSTEM DESIGN
+----------------------------------------------------------------
+
+55. Enterprise RAG for 100K documents and 5K users.
+- Ingestion: S3 raw -> Step Functions -> Textract/parsers -> chunk -> embed (batched, throttle-aware) -> OpenSearch Serverless with metadata (source, version, access group). Hashing for incremental updates and a DLQ for failures.
+- Query path: Cognito/SSO -> API Gateway -> Lambda or ECS -> query rewrite -> hybrid search with access filter -> rerank -> Bedrock with Guardrails -> answer with citations. Stream the response.
+- State and cache: DynamoDB for sessions, a semantic cache for repeated questions.
+- Ops: CloudWatch for latency, tokens and cost, feedback loop, offline eval set, VPC endpoints, KMS and audit logs.
+- Scale concerns: embedding and LLM quota limits, index size and shard design, stale content, cost per query. Estimate load (5K users x queries/day) and say you'd load test.
+
+56. Ingestion from REST APIs and databases into a lake that also feeds a vector store.
+"APIs: scheduled or event-driven Lambda or Glue Python Shell with auth, pagination, rate-limit handling, retries and watermarks, landing raw JSON in S3. Databases: DMS or JDBC with CDC/incremental extraction. Raw -> Silver (cleaned, deduped, Parquet, partitioned) -> Gold. A branch from Silver text content goes through chunk -> embed -> upsert into the vector store, triggered by new Silver partitions. Data quality gates between layers, idempotent writes, and lineage/catalog through Glue Catalog or Unity Catalog."
+
+57. A nightly pipeline is missing its SLA. How do you investigate?
+"First find which stage got slower using the Airflow task durations. Then check for volume spikes, an upstream delay, Spark UI skew or spills, small-files explosion, cluster sizing, or contention with other jobs. Mitigate (rerun, resize), then fix the root cause and add an early-warning alert on stage duration. My DAG re-engineering gave SLA headroom by removing false dependencies and raising parallelism."
+
+58. The chatbot gives a wrong answer in front of leadership.
+"Acknowledge it briefly and stay calm. Then reproduce it and check whether retrieval failed (right chunk not retrieved) or generation failed (right chunk, wrong answer). Fix the cause: content, chunking, a filter or the prompt. Add the question to the evaluation set so it can't regress, and report back what happened and what changed."
+
+59. Migrating Airflow tasks to Glue or Step Functions.
+"Inventory the DAGs and dependencies, then classify tasks: heavy Spark to Glue jobs, short glue-code tasks to Lambda, event-driven flows to Step Functions. Migrate incrementally, run old and new in parallel and compare outputs, move IAM and secrets properly, keep alerting equivalent, then cut over with a rollback plan. Keep Airflow if scheduling and backfills are complex. I did a version of this migrating Python ETL scripts from MWAA to Glue Python Shell to fix IAM permission issues."
+
+----------------------------------------------------------------
+H. QUESTIONS TO ASK THEM (pick two or three)
+----------------------------------------------------------------
+1. "What does the current GenAI stack look like, and what's the biggest challenge in taking it to production?" (Shows you think about production, not demos.)
+2. "How do you evaluate and monitor LLM quality today?" (Shows you know evaluation is the hard part.)
+3. "What does success look like in the first 90 days?" (Shows ownership.)
+4. "How is the team split between data engineering and ML/GenAI work?" (Tells you what the job really is.)
+
+
+################################################################
+PART 4: PROBE POINTS ON YOUR RESUME (SHORT ANSWERS)
+################################################################
+
+1. Vector store / embedding model: answer truthfully (see Q2). A made-up OpenSearch claim falls apart on the second follow-up.
+2. Textract on diagrams: text only; explain how relationships were inferred (see Q12).
+3. 70% cost reduction: know the formula (manual review hours x rate vs Bedrock + Textract + Lambda + API Gateway cost per review). If it was an estimate, say "estimated".
+4. "Zero tooling budget": no licensed tools bought; ran on the existing AWS account with pay-per-use services. Know approximate token cost per query.
+5. Redshift: hands-on strength is Snowflake, Databricks SQL Warehouses and Glue; you know Redshift concepts. If not comfortable, move Redshift lower in your skills line.
+6. "Zero missed SLAs" vs "99.8% uptime": uptime = platform availability, SLA = delivery deadline. Claim fast recovery, not zero failures.
+7. Multi-region "architected": describe your actual slice (access controls, audit logging, masking, Unity Catalog governance).
+8. NLP on clinical notes / PHI: your work was the pipeline (Databricks Jobs, MLflow); de-identification policy came from the client's compliance team.
+9. Teams + Azure Pipelines alerts in an AWS shop: client's existing tooling, so alerts reach on-call where they already work; SNS for the AWS-native side.
+10. Azure Data Lake / GCP depth: AWS is primary; GCP ACE and Fabric DP-700 certs; be honest about production depth.
+
+
+################################################################
+PART 5: GAP ANSWERS (SHORT)
+################################################################
+
+Step Functions: "I haven't owned it in production. I've done orchestration in Airflow, so the model is familiar. For a RAG ingestion flow I'd use Step Functions for ingest, chunk, embed, index, with a Map state for parallel chunking, retries with backoff, and a catch path that sends failures to SNS."
+
+DynamoDB: "I'd use it for session memory and conversation history, with session ID as partition key, a sort key on timestamp, and TTL to expire old sessions. I'd avoid hot partitions by not keying on anything low-cardinality."
+
+API Gateway: "I used API Gateway with Lambda as the backend for the upload and review flow. For longer LLM calls I'd watch the 29-second integration timeout and use asynchronous processing or streaming."
+
+ECS/EKS and Docker: "I haven't run these in production. I'd containerize a long-running service with Docker and deploy to ECS Fargate, and only use EKS if we needed Kubernetes-level control."
+
+SageMaker and Terraform: "My managed-model work has been on Bedrock. For custom training or hosting I'd use SageMaker, and I'd define the infrastructure in Terraform. My CI/CD and IAM experience carries over."
+
+Guardrails / evaluation / agents: "In my RAG work I used grounding in retrieved context, source citations and a refusal path*. For a production system I'd add Bedrock Guardrails for PII and content filtering, a golden question set to measure faithfulness and context precision, and CloudWatch tracking for latency and tokens."
+
+
+################################################################
+PART 6: WHAT IMPRESSES INTERVIEWERS
+################################################################
+
+1. Numbers plus the how. "30% runtime cut" followed by what you changed.
+2. Trade-offs. "I chose X over Y because Z, and here's when I'd choose differently."
+3. Failure stories with prevention. It signals ownership.
+4. Honest boundaries. "I haven't owned that, here's how I'd do it" lands better than bluffing.
+5. Connecting data to GenAI. Governed, fresh, access-controlled data is why RAG works in production.
+
+BEFORE THE INTERVIEW
+1. Replace every starred (*) sample with the truth, especially vector store, embedding model, chunk size, and how you measured the 70% and 40% figures.
+2. Make sure spoken numbers match the resume exactly.
+3. Prepare one "how I'd use it" story each for Step Functions, DynamoDB, and API Gateway.
